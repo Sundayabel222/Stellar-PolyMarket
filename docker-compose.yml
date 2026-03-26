@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   stellar-quickstart:
@@ -26,8 +26,36 @@ services:
       timeout: 3s
       retries: 3
 
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: polymarket
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    ports:
+      - "4000:4000"
+    depends_on:
+      - postgres
+      - redis
+      - stellar-quickstart
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/polymarket
+      REDIS_URL: redis://redis:6379
+      STELLAR_HORIZON: http://stellar-quickstart:8000
+    volumes:
+      - ./backend:/app
+    command: npm run dev
+
 volumes:
   stellar-data:
     name: stellar_polymarket_data
   redis-data:
     name: stellar_polymarket_redis_data
+  postgres-data:
